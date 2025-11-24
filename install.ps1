@@ -20,7 +20,8 @@ catch {
 
 try {
     Write-Host "Removing $CurrentUser from Administrators"
-    Remove-LocalGroupMember -Group "Administrators" -Member $CurrentUser -ErrorAction SilentlyContinue
+    $AdminsGroup = (Get-LocalGroup | Where-Object {$_.SID -eq "S-1-5-32-544"}).Name
+    Remove-LocalGroupMember -Group $AdminsGroup -Member $CurrentUser -ErrorAction SilentlyContinue
 }
 catch {
     Write-Warning "Remove admin rights failed: $($_.Exception.Message)"
@@ -30,16 +31,22 @@ catch {
 # === 2. Create admin account ===
 
 try {
-    Write-Host "Creating admin account $AdminUser"
-    New-LocalUser -Name $AdminUser -Password (ConvertTo-SecureString $AdminPassword -AsPlainText -Force) -FullName $AdminUser -UserMayNotChangePassword -PasswordNeverExpires
+    if (-not (Get-LocalUser -Name $AdminUser -ErrorAction SilentlyContinue)) {
+        Write-Host "Creating admin account $AdminUser"
+        New-LocalUser -Name $AdminUser -Password (ConvertTo-SecureString $AdminPassword -AsPlainText -Force) -FullName $AdminUser -UserMayNotChangePassword -PasswordNeverExpires
+    }
+    else {
+        Write-Host "Admin user '$AdminUser' already exists — skipping creation."
+    }
 }
 catch {
     Write-Warning "Admin creation failed: $($_.Exception.Message)"
 }
 
 try {
-    Write-Host "Adding $AdminUser to Administrators"
-    Add-LocalGroupMember -Group "Administrators" -Member $AdminUser
+    $AdminsGroup = (Get-LocalGroup | Where-Object {$_.SID -eq "S-1-5-32-544"}).Name
+    Write-Host "Adding $AdminUser to administrators group ($AdminsGroup)"
+    Add-LocalGroupMember -Group $AdminsGroup -Member $AdminUser -ErrorAction SilentlyContinue
 }
 catch {
     Write-Warning "Add admin to group failed: $($_.Exception.Message)"
