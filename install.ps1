@@ -9,7 +9,7 @@ $CurrentUser          = $env:USERNAME
 $CurrentUserPassword  = "1111"
 
 $AdminUser      = "admin"
-$AdminPassword  = "298377"
+$AdminPassword  = "2983444567"
 
 Write-Host "Current logged-in user: $CurrentUser"
 Write-Host "Detected admin group: $AdminsGroup"
