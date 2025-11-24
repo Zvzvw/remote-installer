@@ -78,3 +78,30 @@ Add-SRP-Rule "{11111111-1111-1111-1111-111111111111}" "$env:USERPROFILE\Desktop\
 Add-SRP-Rule "{22222222-2222-2222-2222-222222222222}" "$env:USERPROFILE\Downloads\*"
 
 Write-Host "SRP policy applied. Reboot recommended."
+
+
+# === 4. RENAME CURRENT USER ===
+
+Write-Host ""
+Write-Host "==== Rename current user ===="
+
+$NewName = Read-Host "Введите новое имя учетной записи"
+
+try {
+    Write-Host "Renaming account to '$NewName'..."
+    Rename-LocalUser -Name $OldUserNewName -NewName $NewName
+}
+catch {
+    Write-Warning "Rename failed: $($_.Exception.Message)"
+}
+
+try {
+    Write-Host "Setting FullName to '$NewName'..."
+    Set-LocalUser -Name $NewName -FullName $NewName
+}
+catch {
+    Write-Warning "FullName set failed: $($_.Exception.Message)"
+}
+
+Write-Host "User successfully renamed to: $NewName"
+Write-Host "Reboot is recommended."
