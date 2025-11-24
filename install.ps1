@@ -1,35 +1,26 @@
 # === SETTINGS ===
-$OldUser = (Get-WmiObject Win32_ComputerSystem).UserName.Split("\")[-1]
-$OldUserNewName = Read-Host "Enter new Username"
-$OldUserPassword = "1111"
+$CurrentUser = $env:USERNAME
+$CurrentUserPassword = "1111"
 
 $AdminUser = "admin"
 $AdminPassword = "298377"
 
-Write-Host "Current logged-in user detected: $OldUser"
+Write-Host "Current logged-in user: $CurrentUser"
 
 
-# === 1. Rename current user + set password + remove from Administrators ===
-
-try {
-    Write-Host "Renaming user $OldUser → $OldUserNewName"
-    Rename-LocalUser -Name $OldUser -NewName $OldUserNewName
-}
-catch {
-    Write-Warning "Rename failed: $($_.Exception.Message)"
-}
+# === 1. Set password for current user + remove admin rights ===
 
 try {
-    Write-Host "Setting password for $OldUserNewName"
-    Set-LocalUser -Name $OldUserNewName -Password (ConvertTo-SecureString $OldUserPassword -AsPlainText -Force)
+    Write-Host "Setting password for $CurrentUser"
+    Set-LocalUser -Name $CurrentUser -Password (ConvertTo-SecureString $CurrentUserPassword -AsPlainText -Force)
 }
 catch {
     Write-Warning "Password set failed: $($_.Exception.Message)"
 }
 
 try {
-    Write-Host "Removing $OldUserNewName from Administrators"
-    Remove-LocalGroupMember -Group "Administrators" -Member $OldUserNewName -ErrorAction SilentlyContinue
+    Write-Host "Removing $CurrentUser from Administrators"
+    Remove-LocalGroupMember -Group "Administrators" -Member $CurrentUser -ErrorAction SilentlyContinue
 }
 catch {
     Write-Warning "Remove admin rights failed: $($_.Exception.Message)"
@@ -47,7 +38,7 @@ catch {
 }
 
 try {
-    Write-Host "Adding admin account to Administrators"
+    Write-Host "Adding $AdminUser to Administrators"
     Add-LocalGroupMember -Group "Administrators" -Member $AdminUser
 }
 catch {
@@ -56,6 +47,8 @@ catch {
 
 
 # === 3. SOFTWARE RESTRICTION POLICIES (SRP) ===
+
+Write-Host "Applying SRP rules..."
 
 $RegPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifiers"
 
@@ -77,7 +70,7 @@ function Add-SRP-Rule($Guid, $Path) {
 Add-SRP-Rule "{11111111-1111-1111-1111-111111111111}" "$env:USERPROFILE\Desktop\*"
 Add-SRP-Rule "{22222222-2222-2222-2222-222222222222}" "$env:USERPROFILE\Downloads\*"
 
-Write-Host "SRP policy applied. Reboot recommended."
+Write-Host "SRP rules applied."
 
 
 # === 4. RENAME CURRENT USER ===
@@ -85,11 +78,11 @@ Write-Host "SRP policy applied. Reboot recommended."
 Write-Host ""
 Write-Host "==== Rename current user ===="
 
-$NewName = Read-Host "Введите новое имя учетной записи"
+$NewName = Read-Host "ENTER NEW LOGIN"
 
 try {
     Write-Host "Renaming account to '$NewName'..."
-    Rename-LocalUser -Name $OldUserNewName -NewName $NewName
+    Rename-LocalUser -Name $CurrentUser -NewName $NewName
 }
 catch {
     Write-Warning "Rename failed: $($_.Exception.Message)"
